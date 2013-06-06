@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Ghost Protocol - Test 1</title>
+  </head>
+  <body>
+    <script src="js/jquery-1.7.1.min.js"></script>
+    <script src="js/ghostprotocol-2.0.full.js"></script>
+    <script>
+  	$(document).ready(function(){
+			//GHOST PROTOCOL
+			$(document).gProtocol({
+				onResult : _onResult,
+				onConnect : _onConnected,
+				onPendingSync : _onPendingSync,
+				debug : true,
+				commandSync : '100',
+				isConnected : false,
+				timeForInitInteration : 1000,
+				timeForCommandInteration : 5000,
+				timeForRestartInteration : 5000
+			});
+			
+			//$(document).gProtocol('stop');
+			//$(document).gProtocol('restart');
+			
+			function _onResult(_interactionCode){
+				console.log('_onResult > '+_interactionCode);
+			}
+			
+			function _onConnected(_interactionCode){
+				console.log('_onConnected > '+_interactionCode);				
+			}
+			
+			function _onPendingSync(_interactionCode){
+				console.log('_onPendingSync > '+_interactionCode);
+			}
+			
+		});
+    </script>
+  </body>
+	<div id="status" style="width:800px; height:600px; background-color: #ccc;"><div style="padding: 10px; font-size: 24px; color: #555555;">Ghost Protocol - Test 1.</div></div>
+</html>
