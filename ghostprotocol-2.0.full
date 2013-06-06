@@ -1,0 +1,240 @@
+/**
+* Jquery / Arduino - Ghost Protocol 2.0
+* Integration object web.
+* Daniel Furini - Belo Horizonte - MG
+* dna.furini[at]gmail.com
+* daniel[at]studiosoton.com
+**/
+(function($) {
+  		
+	var config = {
+		'onResult': '',
+		'onConnect': '',
+		'onPendingSync': '',
+		'output' : 2,
+		'buttonMode' : 2,
+		'debug' : false,
+		'isConnected' : false,
+		'timeForInitInteration' : 1000,
+		'timeForCommandInteration' : 5000,
+		'timeForRestartInteration' : 5000,
+		'millisecondHigh' : 200,
+		'millisecondLow' : 100,
+		'sensibility' : 50,
+		'commandSync' : '1111',
+		'mode' : 0
+	};
+	
+	var _runIntaration;
+		
+	var methods = {
+		init : function( settings ) { 
+			
+			if (settings){$.extend(config, settings);}
+			
+			if (settings){$.extend(config, settings);}									
+			$(document).bind("contextmenu",function(e){
+				return false;
+			});
+
+			if(config.debug){ console.log('Start Ghost Protocol -> decimal Mode'); }			
+			_runIntaration = true;			
+			methods._interaction();
+			
+		},
+		stop : function( ) {
+			_runIntaration = false;
+			
+			setTimeout(function() {
+				if(!_runIntaration){
+					$(document).unbind('contextmenu');			
+					if(config.debug){ console.log('Stop Ghost Protocol'); }
+				}										
+			}, 500);
+			
+			
+		},
+		restart : function( ) { 
+			_runIntaration = true;
+			
+			setTimeout(function() {
+				if(_runIntaration){
+					$(document).bind("contextmenu",function(e){
+						return false;
+					});		
+					if(config.debug){ console.log('Restart Ghost Protocol'); }
+				}										
+			}, 500);
+		
+			
+		},
+		_isFunction : function(functionToCheck) {
+			var getType = {};
+			return functionToCheck && getType.toString.call(functionToCheck) == '[object Function]';
+		},		
+		_interaction : function() {
+			if(config.debug){ console.log('Init Interation'); }
+			
+			var _session = false;
+			var _currentTime = 0;
+			var _currentTimeSession = 0;
+			var _contInteractionSession = 0;
+			var _interation = 0;
+			var _initInterationCode = false;
+			var _result = "";
+			//Timer Control
+			var TimerInCode = null;
+			var TimerBeforeCode = null;
+			//Variavel para Sensor
+			var _sinal = 0;
+			
+			$(document).live('mousedown', function(e) { 
+				if( e.button == config.buttonMode ) {
+					if(_runIntaration){
+						if(!_session){
+							
+							_contInteractionSession++;
+							if(_contInteractionSession == 1){							
+								_currentTimeSession = +new Date();		
+								if(config.debug){ console.log('--> Init Interaction'); }								
+								TimerBeforeCode = setTimeout(function() {
+									if(!_initInterationCode){
+										if(config.debug){ console.log('--> Restart'); }
+										_contInteractionSession = 0;
+									}										
+								}, config.timeForRestartInteration);								
+							}else if(_contInteractionSession == config.output){
+								var _currentTimeSessionDiff = (+new Date()) - _currentTimeSession;
+								if(_currentTimeSessionDiff < config.timeForInitInteration){
+									_interation = 0;
+									_session = true;									
+								}else{
+									if(config.debug){ console.log('--> Restart'); }
+								}
+								_contInteractionSession = 0;
+							}
+							
+						}else{
+							currentTime = +new Date();
+						}
+					}else{
+						return false;
+					}
+				}
+			});
+			
+			$(document).live('mouseup', function(e) { 
+				if( e.button == config.buttonMode ) {
+					if(_runIntaration){
+							
+							if(_initInterationCode){
+								var difTime = (+new Date()) - currentTime;
+								if(config.debug){ console.log('Diff Time > '+difTime); }
+								
+								/*
+								if(config.mode == 0){
+									if(difTime >= (config.millisecondHigh - config.sensibility) &&  difTime <= (config.millisecondHigh + config.sensibility)){
+										if(config.debug){ console.log('High'); }
+										_result += "1";
+									}else if(difTime >= (config.millisecondLow - config.sensibility) &&  difTime <= (config.millisecondLow + config.sensibility)){
+										if(config.debug){ console.log('Low'); }
+										_result += "0";
+									}
+								}else 
+								*/
+								
+								//if(config.mode == 1){
+								//var _aux_dec = Math.floor( ((difTime - 70)/10) );
+								var _aux_dec = Math.floor( difTime );
+								_result = _aux_dec;
+								/*
+								if(_aux_dec == 0 && _interation == 0){
+									_sinal = 1;
+								}else{
+									_result += ""+_aux_dec;
+								}
+								*/
+								//}
+								
+								_interation++;
+								if(config.debug){ console.log(_interation+' - '+config.output+' : '+_result); }
+								if(_interation == config.output){
+								
+									clearTimeout(TimerInCode);																	
+									if(config.debug){ console.log('Interaction: '+_result); }		
+											
+									//if(_result.length == config.output){	
+
+										if(config.isConnected){											
+											if(methods._isFunction(config.onConnect)){
+												config.onResult( _result );													
+											}
+										}else if(_result == config.commandSync){
+											config.isConnected = true;
+											if(methods._isFunction(config.onConnect)){
+												if(config.debug){ console.log('onConnect'); }
+												config.onConnect( _result );
+											}
+											if(methods._isFunction(config.onResult)){
+												if(config.debug){ console.log('onResult'); }
+												config.onResult( _result );
+											}
+										}else{
+											if(methods._isFunction(config.onPendingSync)){
+												if(config.debug){ console.log('onPendingSync'); }
+												config.onPendingSync( _result );
+											}
+										}
+									//}
+									
+									_sinal = 0;
+									_session = false;
+									_initInterationCode = false;
+									_result = "";
+									if(config.debug){ console.log('End Session'); }	
+									
+								}
+								
+								
+							}							
+													
+							if(_session){								
+								
+								if(!_initInterationCode){
+									if(config.debug){ console.log('Init Session'); }
+									clearTimeout(TimerBeforeCode);
+									TimerInCode = setTimeout(function() {
+										if(_initInterationCode){
+											if(config.debug){ console.log('--> Restart'); }
+											_initInterationCode = false;
+											_contInteractionSession = 0;
+											_session = false;
+											_result = "";
+										}										
+									}, config.timeForCommandInteration);
+									_initInterationCode = true;
+								}
+							}						
+						
+					}else{
+						return false;
+					}
+				}
+			});
+			
+		}
+	};
+	
+	$.fn.gProtocol = function( method ) {
+    
+		if ( methods[method] ) {
+		  return methods[ method ].apply( this, Array.prototype.slice.call( arguments, 1 ));
+		} else if ( typeof method === 'object' || ! method ) {
+		  return methods.init.apply( this, arguments );
+		} else {
+		  $.error( 'Method ' +  method + ' does not exist on jQuery.gProtocol' );
+		}    
+	  
+	};
+		
+})( jQuery );	
